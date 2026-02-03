@@ -1,0 +1,36 @@
+# Production-ready chatbot avatar backend dependencies
+
+# Core web framework
+fastapi
+starlette
+uvicorn[standard]
+gunicorn
+
+# Async HTTP client
+httpx
+
+# Azure SDK dependencies
+azure-cosmos
+azure-identity
+azure-search-documents
+
+# OpenAI for Fabric Data Agent
+openai
+
+# Configuration and validation
+pydantic
+pydantic-settings
+
+# Structured logging
+python-json-logger
+
+# Development and testing dependencies
+pytest
+pytest-asyncio
+pytest-cov
+black
+ruff
+
+# Utilities
+python-multipart
+python-dateutil
