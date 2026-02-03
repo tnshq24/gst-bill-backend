@@ -212,10 +212,10 @@ class ChatService:
     
     def _process_agent_response(self, response: str) -> AnswerResponse:
         """Process the agent response to create both plain text and markdown versions."""
-        from app.models.dto import strip_markdown
+        from app.models.dto import strip_markdown, clean_plain_text
         
         # Strip markdown for plain text version
-        plain_text = strip_markdown(response)
+        plain_text = clean_plain_text(strip_markdown(response))
         
         # Keep original response as markdown
         markdown = response.strip()

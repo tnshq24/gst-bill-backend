@@ -126,3 +126,11 @@ def strip_markdown(text: str) -> str:
     text = text.strip()
     
     return text
+
+def clean_plain_text(text: str) -> str:
+    """Normalize plain text for TTS by removing non-letter characters."""
+    if not text:
+        return ""
+    text = re.sub(r"[^A-Za-z ]+", " ", text)
+    text = re.sub(r"\s+", " ", text).strip()
+    return text
