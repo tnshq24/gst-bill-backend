@@ -40,9 +40,17 @@ class CosmosDBRepository:
             # Optional sessions container
             try:
                 self.sessions_container = database.get_container_client("sessions")
-            except CosmosResourceNotFoundError:
-                logger.warning("Sessions container not found, session metadata will not be persisted")
-                self.sessions_container = None
+                self.sessions_container.read()
+            except (CosmosResourceNotFoundError, CosmosHttpResponseError):
+                try:
+                    self.sessions_container = database.create_container_if_not_exists(
+                        id="sessions",
+                        partition_key=PartitionKey(path="/id")
+                    )
+                    logger.info("Sessions container created")
+                except Exception:
+                    logger.warning("Sessions container not available, session metadata will not be persisted", exc_info=True)
+                    self.sessions_container = None
             
             logger.info("Cosmos DB repository initialized successfully")
             
@@ -75,7 +83,64 @@ class CosmosDBRepository:
         except Exception as e:
             logger.error(f"Unexpected error creating message: {str(e)}", exc_info=True)
             raise CosmosDBError(f"Unexpected error creating message: {str(e)}")
-    
+
+    async def list_sessions(
+        self,
+        limit: int = 20,
+        offset: int = 0
+    ) -> Dict[str, Any]:
+        """List chat sessions with last activity and message counts."""
+        if not self.sessions_container:
+            logger.warning("Sessions container not available; returning empty session list")
+            return {"sessions": [], "total_count": 0}
+
+        try:
+            query = f"""
+            SELECT c.id, c.lastActiveAt, c.messageCount
+            FROM c
+            ORDER BY c.lastActiveAt DESC
+            OFFSET {offset} LIMIT {limit}
+            """
+
+            items = list(self.sessions_container.query_items(
+                query=query,
+                enable_cross_partition_query=True
+            ))
+
+            sessions = [
+                {
+                    "session_id": item.get("id"),
+                    "last_active_at": item.get("lastActiveAt"),
+                    "message_count": int(item.get("messageCount", 0) or 0)
+                }
+                for item in items
+                if item.get("id")
+            ]
+
+            count_query = "SELECT VALUE COUNT(1) FROM c"
+            count_result = list(self.sessions_container.query_items(
+                query=count_query,
+                enable_cross_partition_query=True
+            ))
+            total_count = int(count_result[0]) if count_result else 0
+
+            return {
+                "sessions": sessions,
+                "total_count": total_count
+            }
+        except CosmosResourceNotFoundError:
+            logger.warning("Sessions container not found; returning empty session list")
+            return {"sessions": [], "total_count": 0}
+        except CosmosHttpResponseError as e:
+            if getattr(e, "status_code", None) == 404:
+                logger.warning("Sessions container not found; returning empty session list")
+                return {"sessions": [], "total_count": 0}
+            logger.error(f"Failed to list sessions: {str(e)}", exc_info=True)
+            raise CosmosDBError(f"Failed to list sessions: {str(e)}")
+        except Exception as e:
+            logger.error(f"Failed to list sessions: {str(e)}", exc_info=True)
+            raise CosmosDBError(f"Failed to list sessions: {str(e)}")
+
     async def get_session_messages(
         self, 
         session_id: str, 

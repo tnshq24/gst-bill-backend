@@ -11,7 +11,8 @@ from app.core.errors import ChatbotError, ValidationError
 from app.models.dto import (
     ChatRequest, 
     ChatResponse, 
-    HistoryResponse, 
+    HistoryResponse,
+    SessionsResponse, 
     ChatMessage,
     HealthResponse
 )
@@ -91,6 +92,49 @@ async def chat(
         raise HTTPException(
             status_code=500,
             detail="An unexpected error occurred. Please try again later."
+        )
+
+
+
+
+@router.get("/sessions", response_model=SessionsResponse)
+async def list_sessions(
+    http_request: Request,
+    limit: int = Query(default=20, ge=1, le=100, description="Number of sessions to return"),
+    offset: int = Query(default=0, ge=0, description="Number of sessions to skip"),
+    chat_service: ChatService = Depends(get_chat_service)
+) -> SessionsResponse:
+    """
+    List chat sessions (most recently active first).
+    """
+    trace_id = getattr(http_request.state, "trace_id", "unknown")
+    try:
+        data = await chat_service.list_sessions(limit=limit, offset=offset)
+        return SessionsResponse(
+            sessions=[
+                {
+                    "session_id": s["session_id"],
+                    "last_active_at": datetime.fromisoformat(s["last_active_at"].replace('Z', '+00:00'))
+                    if s.get("last_active_at") else datetime.utcnow(),
+                    "message_count": s.get("message_count", 0)
+                }
+                for s in data["sessions"]
+                if s.get("session_id")
+            ],
+            total_count=data["total_count"],
+            has_more=data["has_more"]
+        )
+    except Exception as e:
+        logger.error(
+            f"Session list error: {str(e)}",
+            extra={
+                "trace_id": trace_id
+            },
+            exc_info=True
+        )
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to list sessions"
         )
 
 

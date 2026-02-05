@@ -76,6 +76,20 @@ class HistoryResponse(BaseModel):
     has_more: bool = Field(..., description="Whether more messages are available")
 
 
+class SessionSummary(BaseModel):
+    """Summary model for a chat session."""
+    session_id: str = Field(..., description="Session ID")
+    last_active_at: datetime = Field(..., description="Last activity timestamp")
+    message_count: int = Field(..., description="Total number of messages")
+
+
+class SessionsResponse(BaseModel):
+    """Response model for listing sessions."""
+    sessions: List[SessionSummary] = Field(..., description="List of sessions")
+    total_count: int = Field(..., description="Total number of sessions")
+    has_more: bool = Field(..., description="Whether more sessions are available")
+
+
 class HealthResponse(BaseModel):
     """Response model for health check endpoint."""
     status: str = Field(..., description="Service status")
@@ -126,6 +140,7 @@ def strip_markdown(text: str) -> str:
     text = text.strip()
     
     return text
+
 
 def clean_plain_text(text: str) -> str:
     """Normalize plain text for TTS by removing non-letter characters."""

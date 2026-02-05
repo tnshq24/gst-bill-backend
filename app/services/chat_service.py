@@ -2,12 +2,13 @@
 
 import time
 import uuid
+from datetime import datetime
 from typing import List, Dict, Any, Optional
 
 from app.core.config import settings
 from app.core.logging import get_logger
 from app.models.dto import ChatRequest, ChatResponse, AnswerResponse
-from app.models.schemas import CosmosMessage, DataAgentRequest, Document
+from app.models.schemas import CosmosMessage, CosmosSession, DataAgentRequest, Document
 from app.services.cosmos_repo import CosmosDBRepository
 from app.services.rag_service import RAGServiceFactory, format_context
 from app.services.data_agent_client import FabricDataAgentClient
@@ -46,8 +47,8 @@ class ChatService:
         )
         
         try:
-            # Step 1: Load conversation history
-            history = await self._load_history(request.session_id)
+            # Step 1: Stateless mode - do not load history for agent context
+            history = []
             
             # Step 2: Perform RAG if enabled
             retrieved_docs = []
@@ -256,7 +257,34 @@ class ChatService:
             # Persist both messages
             await self.cosmos_repo.create_message(user_msg)
             await self.cosmos_repo.create_message(assistant_msg)
-            
+
+            # Update session metadata for session listing
+            try:
+                existing_session = await self.cosmos_repo.get_session(session_id)
+                now = datetime.utcnow()
+                if existing_session:
+                    created_at = existing_session.created_at
+                    message_count = existing_session.message_count + 2
+                    user_id = existing_session.user_id
+                else:
+                    created_at = now
+                    message_count = 2
+                    user_id = metadata.get("userId") if metadata else None
+                    if not user_id and metadata:
+                        user_id = metadata.get("user_id")
+
+                session = CosmosSession(
+                    id=session_id,
+                    user_id=user_id,
+                    created_at=created_at,
+                    last_active_at=now,
+                    message_count=message_count,
+                    metadata=metadata
+                )
+                await self.cosmos_repo.create_or_update_session(session)
+            except Exception as e:
+                logger.warning(f"Failed to update session metadata: {str(e)}")
+
             logger.debug(
                 f"Persisted messages for turn {turn_id} in session {session_id}",
                 extra={
@@ -269,6 +297,23 @@ class ChatService:
             logger.error(f"Failed to persist messages: {str(e)}")
             # Don't fail the request if persistence fails, but log the error
     
+
+    async def list_sessions(
+        self,
+        limit: int = 20,
+        offset: int = 0
+    ) -> Dict[str, Any]:
+        """List chat sessions for UI/session picker."""
+        data = await self.cosmos_repo.list_sessions(limit=limit, offset=offset)
+        sessions = data.get("sessions", [])
+        total_count = data.get("total_count", len(sessions))
+        has_more = (offset + len(sessions)) < total_count
+        return {
+            "sessions": sessions,
+            "total_count": total_count,
+            "has_more": has_more
+        }
+
     async def get_session_history(
         self, 
         session_id: str, 
