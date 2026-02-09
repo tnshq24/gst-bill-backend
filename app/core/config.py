@@ -41,6 +41,14 @@ class Settings(BaseSettings):
     # Security
     cors_origins: str = Field(default="http://localhost:3000", description="CORS allowed origins as comma-separated string")
     max_message_length: int = Field(default=4000, description="Maximum message length")
+
+    # Auth / JWT
+    api_client_id: Optional[str] = Field(None, description="Client ID for token endpoint")
+    api_client_secret: Optional[str] = Field(None, description="Client secret for token endpoint")
+    jwt_secret: Optional[str] = Field(None, description="JWT signing secret")
+    jwt_issuer: str = Field(default="chatbot-backend", description="JWT issuer")
+    jwt_audience: str = Field(default="chatbot-clients", description="JWT audience")
+    jwt_exp_minutes: int = Field(default=60, description="JWT expiration in minutes")
     
     @property
     def cors_origins_list(self) -> List[str]:

@@ -98,6 +98,21 @@ class HealthResponse(BaseModel):
     environment: str = Field(..., description="Running environment")
 
 
+class TokenRequest(BaseModel):
+    """Request model for token endpoint."""
+    client_id: str = Field(..., description="Client ID")
+    client_secret: str = Field(..., description="Client secret")
+    subject: Optional[str] = Field(default=None, description="Subject for the token")
+    scopes: Optional[List[str]] = Field(default=None, description="Optional scopes")
+
+
+class TokenResponse(BaseModel):
+    """Response model for token endpoint."""
+    access_token: str = Field(..., description="JWT access token")
+    token_type: str = Field(default="Bearer", description="Token type")
+    expires_in: int = Field(..., description="Token expiration in seconds")
+
+
 class ErrorResponse(BaseModel):
     """Standard error response model."""
     error: Dict[str, Any] = Field(..., description="Error details")

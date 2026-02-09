@@ -44,3 +44,7 @@ Thumbs.db
 .env
 .env.*
 !.env.example
+
+# Local test harness scripts
+tests/custom_questions_data_agent_plus_sql_agent.py
+tests/custom_questions_sql_agent.py
