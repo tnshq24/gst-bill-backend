@@ -13,6 +13,8 @@ from app.models.dto import (
     ChatResponse, 
     HistoryResponse,
     SessionsResponse, 
+    SessionCreateRequest,
+    SessionCreateResponse,
     ChatMessage,
     HealthResponse
 )
@@ -135,6 +137,37 @@ async def list_sessions(
         raise HTTPException(
             status_code=500,
             detail="Failed to list sessions"
+        )
+
+
+@router.post("/sessions", response_model=SessionCreateResponse)
+async def create_session(
+    request: SessionCreateRequest,
+    http_request: Request,
+    chat_service: ChatService = Depends(get_chat_service)
+) -> SessionCreateResponse:
+    """
+    Create a new chat session and return the session ID.
+    """
+    trace_id = getattr(http_request.state, "trace_id", "unknown")
+    try:
+        data = await chat_service.create_session(
+            user_id=request.user_id,
+            metadata=request.metadata
+        )
+        return SessionCreateResponse(
+            session_id=data["session_id"],
+            created_at=data["created_at"]
+        )
+    except Exception as e:
+        logger.error(
+            f"Session create error: {str(e)}",
+            extra={"trace_id": trace_id},
+            exc_info=True
+        )
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to create session"
         )
 
 

@@ -90,6 +90,21 @@ class SessionsResponse(BaseModel):
     has_more: bool = Field(..., description="Whether more sessions are available")
 
 
+class SessionCreateRequest(BaseModel):
+    """Request model for creating a new session."""
+    user_id: Optional[str] = Field(default=None, alias="userId", description="User identifier")
+    metadata: Optional[Dict[str, Any]] = Field(default=None, description="Optional session metadata")
+
+    class Config:
+        populate_by_name = True
+
+
+class SessionCreateResponse(BaseModel):
+    """Response model for creating a new session."""
+    session_id: str = Field(..., description="Session ID")
+    created_at: datetime = Field(..., description="Session creation timestamp")
+
+
 class HealthResponse(BaseModel):
     """Response model for health check endpoint."""
     status: str = Field(..., description="Service status")

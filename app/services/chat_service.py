@@ -314,6 +314,33 @@ class ChatService:
             "has_more": has_more
         }
 
+    async def create_session(
+        self,
+        user_id: Optional[str] = None,
+        metadata: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
+        """Create a new session and persist metadata."""
+        session_id = str(uuid.uuid4())
+        now = datetime.utcnow()
+        session = CosmosSession(
+            id=session_id,
+            user_id=user_id,
+            created_at=now,
+            last_active_at=now,
+            message_count=0,
+            metadata=metadata
+        )
+
+        try:
+            await self.cosmos_repo.create_or_update_session(session)
+        except Exception as e:
+            logger.warning(f"Failed to create session metadata: {str(e)}")
+
+        return {
+            "session_id": session_id,
+            "created_at": now
+        }
+
     async def get_session_history(
         self, 
         session_id: str, 
