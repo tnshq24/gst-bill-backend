@@ -36,7 +36,7 @@ def get_chat_service() -> ChatService:
 async def chat(
     request: ChatRequest,
     http_request: Request,
-    _claims: dict = Depends(require_jwt),
+    auth: dict = Depends(require_jwt),
     chat_service: ChatService = Depends(get_chat_service)
 ) -> ChatResponse:
     """
@@ -65,6 +65,7 @@ async def chat(
     try:
         # Process chat request
         response = await chat_service.process_chat(request, trace_id)
+        response.token = auth["token"]
         return response
         
     except ChatbotError as e:
@@ -106,7 +107,7 @@ async def list_sessions(
     http_request: Request,
     limit: int = Query(default=20, ge=1, le=100, description="Number of sessions to return"),
     offset: int = Query(default=0, ge=0, description="Number of sessions to skip"),
-    _claims: dict = Depends(require_jwt),
+    _auth: dict = Depends(require_jwt),
     chat_service: ChatService = Depends(get_chat_service)
 ) -> SessionsResponse:
     """
@@ -147,7 +148,7 @@ async def list_sessions(
 async def create_session(
     request: SessionCreateRequest,
     http_request: Request,
-    _claims: dict = Depends(require_jwt),
+    auth: dict = Depends(require_jwt),
     chat_service: ChatService = Depends(get_chat_service)
 ) -> SessionCreateResponse:
     """
@@ -161,7 +162,8 @@ async def create_session(
         )
         return SessionCreateResponse(
             session_id=data["session_id"],
-            created_at=data["created_at"]
+            created_at=data["created_at"],
+            token=auth["token"]
         )
     except Exception as e:
         logger.error(

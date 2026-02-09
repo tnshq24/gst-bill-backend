@@ -65,6 +65,7 @@ class Settings(BaseSettings):
         "env_file": ".env",
         "case_sensitive": False,
         "validate_assignment": True,
+        "extra": "ignore",
     }
     
     @property

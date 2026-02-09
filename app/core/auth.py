@@ -77,4 +77,5 @@ def require_jwt(authorization: str = Header(..., alias="Authorization")) -> Dict
     if not authorization or not authorization.lower().startswith("bearer "):
         raise HTTPException(status_code=401, detail="Missing bearer token")
     token = authorization.split(" ", 1)[1].strip()
-    return decode_jwt(token)
+    claims = decode_jwt(token)
+    return {"token": token, "claims": claims}

@@ -72,6 +72,6 @@ async def issue_token(request: TokenRequest) -> TokenResponse:
 
 
 @router.get("/token")
-async def validate_token(claims: Dict[str, Any] = Depends(require_jwt)) -> Dict[str, Any]:
-    """Validate a bearer token and return its claims."""
-    return {"valid": True, "claims": claims}
+async def validate_token(auth: Dict[str, Any] = Depends(require_jwt)) -> Dict[str, Any]:
+    """Validate a bearer token and return the token."""
+    return {"token": auth["token"]}

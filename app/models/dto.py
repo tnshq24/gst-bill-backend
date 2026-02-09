@@ -50,6 +50,7 @@ class ChatResponse(BaseModel):
     sources: Optional[List[Source]] = Field(default=None, description="Sources used for RAG (if applicable)")
     latency_ms: int = Field(..., description="Total processing time in milliseconds")
     trace_id: str = Field(..., description="Trace ID for debugging")
+    token: Optional[str] = Field(default=None, description="Bearer token (echoed)")
 
 
 class ChatMessage(BaseModel):
@@ -103,6 +104,7 @@ class SessionCreateResponse(BaseModel):
     """Response model for creating a new session."""
     session_id: str = Field(..., description="Session ID")
     created_at: datetime = Field(..., description="Session creation timestamp")
+    token: Optional[str] = Field(default=None, description="Bearer token (echoed)")
 
 
 class HealthResponse(BaseModel):
