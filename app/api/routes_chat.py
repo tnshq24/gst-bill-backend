@@ -7,6 +7,7 @@ from fastapi.responses import JSONResponse
 
 from app.core.logging import get_logger
 from app.core.config import settings
+from app.core.auth import require_jwt
 from app.core.errors import ChatbotError, ValidationError
 from app.models.dto import (
     ChatRequest, 
@@ -35,6 +36,7 @@ def get_chat_service() -> ChatService:
 async def chat(
     request: ChatRequest,
     http_request: Request,
+    _claims: dict = Depends(require_jwt),
     chat_service: ChatService = Depends(get_chat_service)
 ) -> ChatResponse:
     """
@@ -104,6 +106,7 @@ async def list_sessions(
     http_request: Request,
     limit: int = Query(default=20, ge=1, le=100, description="Number of sessions to return"),
     offset: int = Query(default=0, ge=0, description="Number of sessions to skip"),
+    _claims: dict = Depends(require_jwt),
     chat_service: ChatService = Depends(get_chat_service)
 ) -> SessionsResponse:
     """
@@ -144,6 +147,7 @@ async def list_sessions(
 async def create_session(
     request: SessionCreateRequest,
     http_request: Request,
+    _claims: dict = Depends(require_jwt),
     chat_service: ChatService = Depends(get_chat_service)
 ) -> SessionCreateResponse:
     """

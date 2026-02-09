@@ -8,10 +8,11 @@ import secrets
 import time
 from typing import Dict, Any
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 
 from app.core.config import settings
 from app.models.dto import TokenRequest, TokenResponse
+from app.core.auth import require_jwt
 
 router = APIRouter(prefix="/url", tags=["auth"])
 
@@ -68,3 +69,9 @@ async def issue_token(request: TokenRequest) -> TokenResponse:
 
     token = _create_jwt(payload, settings.jwt_secret)
     return TokenResponse(access_token=token, expires_in=expires_in)
+
+
+@router.get("/token")
+async def validate_token(claims: Dict[str, Any] = Depends(require_jwt)) -> Dict[str, Any]:
+    """Validate a bearer token and return its claims."""
+    return {"valid": True, "claims": claims}
