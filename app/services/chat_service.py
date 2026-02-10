@@ -47,8 +47,8 @@ class ChatService:
         )
         
         try:
-            # Step 1: Stateless mode - do not load history for agent context
-            history = []
+            # Step 1: Load history for agent context (last N turns)
+            history = await self._load_history(request.session_id)
             
             # Step 2: Perform RAG if enabled
             retrieved_docs = []
