@@ -227,24 +227,25 @@ class FabricDataAgentClient:
                 order="asc"
             )
 
-            # Extract assistant responses
-            responses = []
-            for msg in messages_response.data:
-                if msg.role == "assistant":
-                    try:
-                        content = msg.content[0]
-                        if hasattr(content, 'text'):
-                            text_content = getattr(content, 'text', None)
-                            if text_content is not None and hasattr(text_content, 'value'):
-                                responses.append(text_content.value)
-                            elif text_content is not None:
-                                responses.append(str(text_content))
-                            else:
-                                responses.append(str(content))
-                        else:
-                            responses.append(str(content))
-                    except (IndexError, AttributeError):
-                        responses.append(str(msg.content))
+            # Extract the latest assistant response only
+            def _extract_text(message) -> str:
+                try:
+                    content = message.content[0]
+                    if hasattr(content, "text"):
+                        text_content = getattr(content, "text", None)
+                        if text_content is not None and hasattr(text_content, "value"):
+                            return text_content.value
+                        if text_content is not None:
+                            return str(text_content)
+                        return str(content)
+                    return str(content)
+                except (IndexError, AttributeError):
+                    return str(message.content)
+
+            assistant_messages = [
+                msg for msg in messages_response.data if msg.role == "assistant"
+            ]
+            latest_response = _extract_text(assistant_messages[-1]) if assistant_messages else ""
             
             # Clean up resources
             try:
@@ -253,7 +254,7 @@ class FabricDataAgentClient:
                 pass  # Ignore cleanup errors
             
             # Return the response
-            full_response = "\n".join(responses) if responses else "No response received from the data agent."
+            full_response = latest_response or "No response received from the data agent."
             
             return {
                 "response": full_response,

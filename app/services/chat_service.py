@@ -77,7 +77,7 @@ class ChatService:
             agent_response = await self.data_agent_client.invoke_agent(
                 messages=messages,
                 context=rag_context if rag_context else None,
-                thread_name=request.session_id  # Use session_id as thread name for persistence
+                thread_name=None  # Use a fresh thread; history is provided explicitly
             )
             
             # Step 5: Process response
