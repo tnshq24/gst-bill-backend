@@ -43,7 +43,34 @@ def _get_speech_token_sync() -> Dict[str, Any]:
     return {
         "token": response.text,
         "region": settings.speech_region,
-        "expires_in": 540,
+    }
+
+
+def _normalize_ice_payload(payload: Dict[str, Any]) -> Dict[str, Any]:
+    # Enforce a stable response contract for frontend usage.
+    urls = payload.get("Urls") or payload.get("urls")
+    username = payload.get("Username") or payload.get("username") or payload.get("userName")
+    password = payload.get("Password") or payload.get("password") or payload.get("credential")
+
+    if (not urls or not username or not password) and isinstance(payload.get("iceServers"), list):
+        first_server = payload["iceServers"][0] if payload["iceServers"] else {}
+        urls = urls or first_server.get("urls")
+        username = username or first_server.get("username")
+        password = password or first_server.get("credential")
+
+    if not urls or not username or not password:
+        raise HTTPException(
+            status_code=502,
+            detail=f"Unexpected ICE token payload format: {payload}",
+        )
+
+    if isinstance(urls, str):
+        urls = [urls]
+
+    return {
+        "Urls": urls,
+        "Username": username,
+        "Password": password,
     }
 
 
@@ -75,7 +102,7 @@ def _get_ice_token_sync() -> Dict[str, Any]:
             status_code=response.status_code,
             detail=f"Failed to fetch ICE token: {response.text}",
         )
-    return response.json()
+    return _normalize_ice_payload(response.json())
 
 
 @router.get("/token")
