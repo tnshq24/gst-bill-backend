@@ -130,6 +130,19 @@ class TokenResponse(BaseModel):
     expires_in: int = Field(..., description="Token expiration in seconds")
 
 
+class SpeechTokenResponse(BaseModel):
+    """Response model for speech relay token endpoint."""
+    token: str = Field(..., description="Azure Speech short-lived token")
+    region: str = Field(..., description="Azure Speech region")
+
+
+class IceTokenResponse(BaseModel):
+    """Response model for avatar ICE relay token endpoint."""
+    Urls: List[str] = Field(..., description="TURN/STUN relay URLs")
+    Username: str = Field(..., description="ICE username")
+    Password: str = Field(..., description="ICE password")
+
+
 class ErrorResponse(BaseModel):
     """Standard error response model."""
     error: Dict[str, Any] = Field(..., description="Error details")

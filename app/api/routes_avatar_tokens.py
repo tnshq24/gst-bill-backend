@@ -7,6 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException
 
 from app.core.auth import require_jwt
 from app.core.config import settings
+from app.models.dto import SpeechTokenResponse, IceTokenResponse
 
 router = APIRouter(tags=["avatar_tokens"])
 
@@ -105,13 +106,13 @@ def _get_ice_token_sync() -> Dict[str, Any]:
     return _normalize_ice_payload(response.json())
 
 
-@router.get("/token")
-async def get_speech_token(_auth: Dict[str, Any] = Depends(require_jwt)) -> Dict[str, Any]:
+@router.get("/token", response_model=SpeechTokenResponse)
+async def get_speech_token(_auth: Dict[str, Any] = Depends(require_jwt)) -> SpeechTokenResponse:
     """Return short-lived Azure Speech token for frontend avatar/speech usage."""
     return await asyncio.to_thread(_get_speech_token_sync)
 
 
-@router.get("/ice-token")
-async def get_avatar_ice_token(_auth: Dict[str, Any] = Depends(require_jwt)) -> Dict[str, Any]:
+@router.get("/ice-token", response_model=IceTokenResponse)
+async def get_avatar_ice_token(_auth: Dict[str, Any] = Depends(require_jwt)) -> IceTokenResponse:
     """Return short-lived ICE relay credentials for avatar WebRTC."""
     return await asyncio.to_thread(_get_ice_token_sync)
