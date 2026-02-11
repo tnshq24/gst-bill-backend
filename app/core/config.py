@@ -49,6 +49,12 @@ class Settings(BaseSettings):
     jwt_issuer: str = Field(default="chatbot-backend", description="JWT issuer")
     jwt_audience: str = Field(default="chatbot-clients", description="JWT audience")
     jwt_exp_minutes: int = Field(default=60, description="JWT expiration in minutes")
+
+    # Azure Speech / Avatar
+    speech_key: Optional[str] = Field(None, description="Azure Speech resource key")
+    speech_region: Optional[str] = Field(None, description="Azure Speech region")
+    speech_token_endpoint: Optional[str] = Field(None, description="Optional override for speech token endpoint")
+    speech_ice_endpoint: Optional[str] = Field(None, description="Optional override for avatar ICE token endpoint")
     
     @property
     def cors_origins_list(self) -> List[str]:

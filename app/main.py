@@ -17,6 +17,7 @@ from app.core.errors import (
 )
 from app.api.routes_chat import router as chat_router
 from app.api.routes_auth import router as auth_router
+from app.api.routes_avatar_tokens import router as avatar_tokens_router
 
 # Setup logging
 setup_logging(settings.log_level)
@@ -51,6 +52,7 @@ app.add_exception_handler(Exception, general_exception_handler)
 # Include routers
 app.include_router(chat_router)
 app.include_router(auth_router)
+app.include_router(avatar_tokens_router)
 
 # Define startup event
 @app.on_event("startup")
